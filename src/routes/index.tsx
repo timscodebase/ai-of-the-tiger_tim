@@ -1,17 +1,37 @@
 import { $, component$, useStore } from "@builder.io/qwik"
 import type { RequestHandler } from "@builder.io/qwik-city"
+import { PromptTemplate } from "@langchain/core/prompts";
+import party from "party-js";
+import { Input } from "~/components"
+
+const template = `You're a professional fighting judge from Liverpool that speaks mostly with Cockney slang. Who would win in a fight between {opponent1} ("opponent1") and {opponent2}("opponent2")? Only tell me who would win and a short reason why.
+
+Format the response like this:
+"Winner: opponent1 or opponent2. reason: the reason they won."`
+const promptTemplate = new PromptTemplate({
+  template: template,
+  inputVariables: ['opponent1', 'opponent2']
+})
 
 export const onPost: RequestHandler = (async (requestEvent) => {
-  const stream = new ReadableStream({
+    const OPEN_API_KEY = requestEvent.env.get('OPEN_API_KEY')
+    const stream = new ReadableStream({
     async start(controller) {
       // Do work before streaming
       const formData = await requestEvent.parseBody()
-      // Do work before stream starts
-      const OPEN_API_KEY = requestEvent.env.get('OPEN_API_KEY')
-      const prompt = formData.prompt
+        const opponent1 = formData.oppenent1
+        const opponent2 = formData.oppenent2
+
+        const prompt = await promptTemplate.format({
+          opponent1: opponent1,
+          opponent2: opponent2
+        })
+
       const body = {
         'model': 'gpt-3.5-turbo',
-        'messages': [{ 'role': 'user', 'content': prompt }],
+        'messages': [{ 'role': 'user', 'content': prompt}],
+        max_tokens: 300,
+        temperature: 1,
         stream: true
       }
       const res = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -65,10 +85,6 @@ export const onPost: RequestHandler = (async (requestEvent) => {
     }
   })
   requestEvent.send(new Response(stream))
-  
-  // const json = await res.json();
-  // const data = json.choices[0].message.content;
-  // return { data }
 })
 
 function jsFormSubmit(form) {
@@ -92,9 +108,12 @@ function jsFormSubmit(form) {
 export default component$(() => {
   const state = useStore({
     isLoading: false,
-    text: ''
+    text: '',
+    winner: ''
   })
   const handleSubmit = $(async (e: SubmitEvent) => {
+    state.text = ''
+    state.winner = ''
     state.isLoading = true
 
     const form = e.target as HTMLFormElement
@@ -117,12 +136,26 @@ export default component$(() => {
       isStillStreaming = !done
     }
 
+    const winnerPattern = /Winner:\s+(\w+).*/gi
+    const match = winnerPattern.exec(state.text)
+    state.winner = match?.length ? match[1].toLowerCase() : ''
+
+    if (state.winner) {
+      const winnerInput = document.querySelector(`textarea[name=${state.winner}]`) as HTMLTextAreaElement
+      party.confetti(winnerInput, {
+        count: 40,
+        size: 2,
+        spread: 15
+      })
+    }
+
     state.isLoading = false
   })
 
   return (
-    <main class="max-w-4xl mx-auto p-4">
-      <h1 class="text-6xl">Hi 👋</h1>
+    <div class="max-w-4xl mx-auto p-4">
+      <h1 class="text-6xl">AI of the Tiger 🐯</h1>
+      <p class="text-neutral-100">An AI bot that will determain who would win in a battle between...</p>
 
       <form
         method="post"
@@ -130,22 +163,27 @@ export default component$(() => {
         preventdefault:submit
         onSubmit$={handleSubmit}
       >
-        <label for="prompt">
-          Prompt
-        </label>
-        <textarea name="prompt" id="prompt">
-          Tell me a funny joke
-        </textarea>
+        <div class="flex gap-4 grid-cols-2">
+          <Input label="Oppenent 1" name="opponent1" value="A pirate" class={{
+            rainbow: state.winner === 'opponent1'
+          }}/>
+          <Input label="Oppenent 2" name="opponent2" value="A Ninja" class={{
+            rainbow: state.winner === 'opponent2'
+          }}/>
+        </div>
 
-        <button type="submit" aria-disabled={state.isLoading}>
-          {state.isLoading ? 'Loading...' : 'Submit'}
-        </button>
+        <div>
+          <button class="text-slate-50" type="submit" aria-disabled={state.isLoading}>
+            {state.isLoading ? 'Loading...' : 'Submit'}
+            </button>
+        </div>
       </form>
+
       {state.text && (
         <article class="mt-4 border border-2 rounded-lg p-4 bg-[canvas]">
-          <p>{state.text}</p>
+          <p>{state.text.slice(27)}</p>
         </article>
       )}
-    </main>
+    </div>
   );
 });
