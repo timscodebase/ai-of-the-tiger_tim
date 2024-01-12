@@ -168,7 +168,7 @@ export default component$(() => {
 
   return (
     <main class="max-w-4xl mx-auto p-4">
-      <h1 class="text-4xl">AI of the Tiger</h1>
+      <h1 class="text-4xl">AI of the Tiger 🐯</h1>
       <p>A silly AI bot that can tell you who would win in a fight between...</p>
 
       <form 
