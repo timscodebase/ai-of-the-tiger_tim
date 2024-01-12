@@ -1,8 +1,8 @@
 import { component$ } from "@builder.io/qwik";
-import { randomString } from "~/utils";
+import { randomString } from "~/utils.js";
 
 /**
- * @typedef {HTMLAttributes<HTMLTextAreaElement>} TextareaAttributes
+ * @typedef {import('@builder.io/qwik').QwikIntrinsicElements['textarea']} TextareaAttributes
  */
 
 /**
@@ -13,11 +13,15 @@ import { randomString } from "~/utils";
  * value?: string
  * }>}
  */
-export default component$(({id, label, value, ...props}) => {
-  const id = id || randomString(8)
+export default component$((props) => {
+  const id = props.id || randomString(8)
 
   return (
-    <label class= "w-1/2 flex flex-col text-neutral-100" for={id}>{label}<textarea class="p-4 text-neutral-800" id={id} {...props}>{value}</textarea>
-    </label>
+    <div>
+      <label for={id}>{props.label}</label>
+      <textarea id={id} {...props}>
+        {/** @type {undefined} */ (props.value)}
+      </textarea>
+    </div>
   )
 })

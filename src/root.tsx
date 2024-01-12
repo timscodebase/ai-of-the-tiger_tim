@@ -5,6 +5,7 @@ import {
   ServiceWorkerRegister,
 } from "@builder.io/qwik-city";
 import { RouterHead } from "./components/router-head/router-head";
+import { SvgDefinitions } from './components/Svg.jsx'
 
 import "./global.css";
 
@@ -22,10 +23,15 @@ export default component$(() => {
         <meta charSet="utf-8" />
         <link rel="manifest" href="/manifest.json" />
         <RouterHead />
-        <ServiceWorkerRegister />
       </head>
-      <body lang="en" class="bg-primary-800 h-full max-h-full">
+      <body lang="en">
         <RouterOutlet />
+        <footer class="my-10 sm:mt-20 px-4 text-center">
+          <p>Built by <a href="https://austingil.com">Austin Gil</a>. Powered by <a href="https://akamai.com">Akamai Connected Cloud</a>.</p>
+          <p><a href="https://linode.com/austingil">Get $100 in free cloud computing credits.</a></p>
+        </footer>
+        <ServiceWorkerRegister />
+        <SvgDefinitions/>
       </body>
     </QwikCityProvider>
   );
